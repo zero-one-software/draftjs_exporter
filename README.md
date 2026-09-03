@@ -1,8 +1,16 @@
-# Draft.js Exporter
+# Draft.js Exporter (Zero One fork)
 
-[![Circle CI](https://circleci.com/gh/ignitionworks/draftjs_exporter/tree/master.svg?style=shield)](https://circleci.com/gh/ignitionworks/draftjs_exporter/tree/master)
-[![Code Climate](https://codeclimate.com/github/ignitionworks/draftjs_exporter/badges/gpa.svg)](https://codeclimate.com/github/ignitionworks/draftjs_exporter)
-[![Test Coverage](https://codeclimate.com/github/ignitionworks/draftjs_exporter/badges/coverage.svg)](https://codeclimate.com/github/ignitionworks/draftjs_exporter/coverage)
+> **This is a Zero One fork of [`ignitionworks/draftjs_exporter`](https://github.com/ignitionworks/draftjs_exporter),
+> published to RubyGems as [`zo_draftjs_exporter`](https://rubygems.org/gems/zo_draftjs_exporter).**
+>
+> It keeps the upstream `draftjs_exporter` require paths and `DraftjsExporter` namespace, so it is a drop-in
+> replacement for the original gem — but for the same reason the two cannot be installed side by side.
+> See [Fork changes](#fork-changes) for what differs from upstream.
+
+```ruby
+# Gemfile
+gem 'zo_draftjs_exporter'
+```
 
 [Draft.js](https://facebook.github.io/draft-js/) is a framework for
 building rich text editors. However, it does not support exporting
@@ -78,6 +86,42 @@ exporter.call({
 })
 # => "<h1>Header</h1><div>\n<span style=\"font-style: italic;\">some</span> <a href=\"http://example.com\" class=\"link\">paragraph</a> text</div>"
 ```
+
+## Fork changes
+
+Changes in this fork that are not in upstream `draftjs_exporter`:
+
+### `block_callback:` — hook after each block
+
+Pass a callable to be invoked with the rendered element and the source block, after each block is processed.
+Useful for post-processing or collecting metadata as the document is built.
+
+```ruby
+exporter = DraftjsExporter::HTML.new(
+  block_map: block_map,
+  style_map: style_map,
+  entity_decorators: entity_decorators,
+  block_callback: ->(element, block) { puts "rendered #{block[:type]}" }
+)
+```
+
+### `className` in `style_map` — CSS classes for inline styles
+
+A `style_map` entry may include a `className:` key. Matching text is given that class, and any remaining keys
+in the entry are still emitted as an inline `style` attribute. Classes from multiple applied styles are joined
+with a space.
+
+```ruby
+style_map = {
+  'ITALIC' => { fontStyle: 'italic' },
+  'HIGHLIGHT' => { className: 'highlight' },
+  'BIG_RED' => { className: 'big', color: 'red' }
+}
+# 'BIG_RED' text renders as: <span style="color: red;" class="big">...</span>
+```
+
+Note that a `className`-only entry still emits an empty `style=""` attribute
+(`<span style="" class="highlight">`), as the `style` attribute is always set.
 
 ## Tests
 
